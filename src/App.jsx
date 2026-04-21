@@ -1,6 +1,6 @@
 /**
  * KW Coastline Scale Management
- * Version: V2.7 (Feature - Portuguese National Holidays Integration)
+ * Version: V2.6.1 (Hotfix - Data Safeguards & Null Checks)
  * Last Update: 2026
  */
 
@@ -16,15 +16,16 @@
  } from 'lucide-react';
  
  // --- CONFIGURAÇÕES E CONSTANTES ---
- const ADMIN_EMAILS = ['hugocunha@kwportugal.pt']; ['ricardorosa@kwportugal.pt'];
+ const ADMIN_EMAILS = ['hugocunha@kwportugal.pt']; ['sofiaribeiro@kwportugal.pt']
  
  const defaultFirebaseConfig = {
-  apiKey: "AIzaSyBQN51i9RgnoygcchPVmYt-nON1aY4_eUc",
-  authDomain: "our-tract-466815-j4.firebaseapp.com",
-  projectId: "our-tract-466815-j4",
-  storageBucket: "our-tract-466815-j4.firebasestorage.app",
-  messagingSenderId: "568088933808",
-  appId: "1:568088933808:web:0ac71bb1a239b70d5dd275"
+   
+   apiKey: "AIzaSyBQN51i9RgnoygcchPVmYt-nON1aY4_eUc",
+   authDomain: "our-tract-466815-j4.firebaseapp.com",
+   projectId: "our-tract-466815-j4",
+   storageBucket: "our-tract-466815-j4.firebasestorage.app",
+   messagingSenderId: "568088933808",
+   appId: "1:568088933808:web:0ac71bb1a239b70d5dd275"
  };
  
  const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : defaultFirebaseConfig;
@@ -53,44 +54,7 @@
  const daysOfWeek = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
  
  // ============================================================================
- // FUNÇÃO UTILITÁRIA: CÁLCULO DE FERIADOS NACIONAIS PT
- // ============================================================================
- const getPTnationalHolidays = (year) => {
-   const f = Math.floor;
-   const G = year % 19;
-   const C = f(year / 100);
-   const H = (C - f(C / 4) - f((8 * C + 13) / 25) + 19 * G + 15) % 30;
-   const I = H - f(H / 28) * (1 - f(29 / (H + 1)) * f((21 - G) / 11));
-   const J = (year + f(year / 4) + I + 2 - C + f(C / 4)) % 7;
-   const L = I - J;
-   const month = 3 + f((L + 40) / 44);
-   const day = L + 28 - 31 * f(month / 4);
-   
-   const easter = new Date(year, month - 1, day);
-   const goodFriday = new Date(year, month - 1, day - 2);
-   const corpusChristi = new Date(year, month - 1, day + 60);
- 
-   const format = (d) => `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
- 
-   return {
-     [`${year}-1-1`]: "Ano Novo",
-     [`${year}-4-25`]: "Dia da Liberdade",
-     [`${year}-5-1`]: "Dia do Trabalhador",
-     [`${year}-6-10`]: "Dia de Portugal",
-     [`${year}-8-15`]: "Assunção de N. Sra.",
-     [`${year}-10-5`]: "Implant. da República",
-     [`${year}-11-1`]: "Todos os Santos",
-     [`${year}-12-1`]: "Restauração da Indep.",
-     [`${year}-12-8`]: "Imaculada Conceição",
-     [`${year}-12-25`]: "Natal",
-     [format(goodFriday)]: "Sexta-feira Santa",
-     [format(easter)]: "Páscoa",
-     [format(corpusChristi)]: "Corpo de Deus",
-   };
- };
- 
- // ============================================================================
- // COMPONENTES MODULARIZADOS
+ // COMPONENTES MODULARIZADOS (Substituem ficheiros separados)
  // ============================================================================
  
  // 1. COMPONENTE: CONTABILIDADE
@@ -159,7 +123,7 @@
  };
  
  // 2. COMPONENTE: CALENDÁRIO MENSAL
- const Calendario = ({ year, month, daysInMonth, firstDayOfMonth, assignments, isAdmin, setAssignmentModal, resolveAgent, setCurrentDate, holidays }) => {
+ const Calendario = ({ year, month, daysInMonth, firstDayOfMonth, assignments, isAdmin, setAssignmentModal, resolveAgent, setCurrentDate }) => {
    return (
      <div className="space-y-6 animate-in fade-in duration-500 w-full overflow-hidden">
        <div className="overflow-x-auto custom-scrollbar pb-4 w-full">
@@ -187,51 +151,37 @@
              {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(day => {
                const dow = new Date(year, month, day).getDay();
                const dateKey = `${year}-${month + 1}-${day}`;
-               const holidayName = holidays[dateKey];
-               const morningAgent = !holidayName ? resolveAgent(assignments[`${dateKey}-morning`]) : null;
-               const afternoonAgent = !holidayName ? resolveAgent(assignments[`${dateKey}-afternoon`]) : null;
+               const morningAgent = resolveAgent(assignments[`${dateKey}-morning`]);
+               const afternoonAgent = resolveAgent(assignments[`${dateKey}-afternoon`]);
                
                return (
-                 <div key={day} className={`min-h-[110px] md:min-h-[125px] lg:min-h-[140px] border ${holidayName ? 'border-red-500 bg-red-50/40' : 'border-black'} p-1.5 md:p-2 transition-colors ${!holidayName && (dow === 0 ? 'bg-slate-200' : 'bg-slate-100 hover:bg-white')} day-cell flex flex-col`}>
+                 <div key={day} className={`min-h-[110px] md:min-h-[125px] lg:min-h-[140px] border border-black p-1.5 md:p-2 transition-colors ${dow === 0 ? 'bg-slate-200' : 'bg-slate-100 hover:bg-white'} day-cell flex flex-col`}>
                    <div className="flex justify-between items-start mb-1.5 md:mb-2">
-                     <span className={`text-xs font-black ${holidayName ? 'text-red-600' : 'text-black'}`}>{day}</span>
-                     {holidayName ? (
-                         <span className="text-[8px] font-black uppercase text-red-600">Feriado</span>
-                     ) : dow === 0 ? (
-                         <span className="text-[8px] font-black uppercase text-black">Encerrado</span>
-                     ) : null}
+                     <span className="text-xs font-black text-black">{day}</span>
+                     {dow === 0 && <span className="text-[8px] font-black uppercase text-black">Encerrado</span>}
                    </div>
-                   
-                   {(dow !== 0 || holidayName) && (
+                   {dow !== 0 && (
                      <div className="space-y-1.5 flex-1 flex flex-col justify-center">
-                       {holidayName ? (
-                         <div className="flex-1 p-1 lg:p-1.5 rounded-lg border-2 border-red-500 bg-white text-center flex flex-col items-center justify-center min-h-[2.5rem] shadow-sm">
-                            <span className="text-[8px] md:text-[9px] font-black text-red-600 uppercase leading-[1.1] tracking-tighter whitespace-normal break-words block px-0.5">{holidayName}</span>
+                       <div 
+                         onClick={() => isAdmin && setAssignmentModal({ isOpen: true, day, shift: 'morning' })} 
+                         className={`p-1 lg:p-1.5 rounded-lg border-2 border-dashed text-center flex items-center justify-center min-h-[2.5rem] transition-all ${morningAgent ? 'border-transparent text-white shadow-md' : 'border-slate-300 text-slate-500'} ${isAdmin ? 'cursor-pointer hover:border-red-400 bg-white/50' : 'cursor-default'}`} 
+                         style={morningAgent ? { backgroundColor: morningAgent.color } : {}}
+                       >
+                         <span className="text-[8px] md:text-[9px] font-black uppercase leading-[1.1] tracking-tighter whitespace-normal break-words block px-0.5">
+                           {morningAgent ? `${String(morningAgent.firstName || '')} ${String(morningAgent.lastName || '')}` : 'Turno Manhã'}
+                         </span>
+                       </div>
+                       {dow !== 6 && (
+                         <div 
+                           onClick={() => isAdmin && setAssignmentModal({ isOpen: true, day, shift: 'afternoon' })} 
+                           className={`p-1 lg:p-1.5 rounded-lg border-2 border-dashed text-center flex items-center justify-center min-h-[2.5rem] transition-all ${afternoonAgent ? 'border-transparent text-white shadow-md' : 'border-slate-300 text-slate-500'} ${isAdmin ? 'cursor-pointer hover:border-red-400 bg-white/50' : 'cursor-default'}`} 
+                           style={afternoonAgent ? { backgroundColor: afternoonAgent.color } : {}}
+                         >
+                           <span className="text-[8px] md:text-[9px] font-black uppercase leading-[1.1] tracking-tighter whitespace-normal break-words block px-0.5">
+                             {afternoonAgent ? `${String(afternoonAgent.firstName || '')} ${String(afternoonAgent.lastName || '')}` : 'Turno Tarde'}
+                           </span>
                          </div>
-                       ) : dow !== 0 ? (
-                         <>
-                           <div 
-                             onClick={() => isAdmin && setAssignmentModal({ isOpen: true, day, shift: 'morning' })} 
-                             className={`p-1 lg:p-1.5 rounded-lg border-2 border-dashed text-center flex items-center justify-center min-h-[2.5rem] transition-all ${morningAgent ? 'border-transparent text-white shadow-md' : 'border-slate-300 text-slate-500'} ${isAdmin ? 'cursor-pointer hover:border-red-400 bg-white/50' : 'cursor-default'}`} 
-                             style={morningAgent ? { backgroundColor: morningAgent.color } : {}}
-                           >
-                             <span className="text-[8px] md:text-[9px] font-black uppercase leading-[1.1] tracking-tighter whitespace-normal break-words block px-0.5">
-                               {morningAgent ? `${String(morningAgent.firstName || '')} ${String(morningAgent.lastName || '')}` : 'Turno Manhã'}
-                             </span>
-                           </div>
-                           {dow !== 6 && (
-                             <div 
-                               onClick={() => isAdmin && setAssignmentModal({ isOpen: true, day, shift: 'afternoon' })} 
-                               className={`p-1 lg:p-1.5 rounded-lg border-2 border-dashed text-center flex items-center justify-center min-h-[2.5rem] transition-all ${afternoonAgent ? 'border-transparent text-white shadow-md' : 'border-slate-300 text-slate-500'} ${isAdmin ? 'cursor-pointer hover:border-red-400 bg-white/50' : 'cursor-default'}`} 
-                               style={afternoonAgent ? { backgroundColor: afternoonAgent.color } : {}}
-                             >
-                               <span className="text-[8px] md:text-[9px] font-black uppercase leading-[1.1] tracking-tighter whitespace-normal break-words block px-0.5">
-                                 {afternoonAgent ? `${String(afternoonAgent.firstName || '')} ${String(afternoonAgent.lastName || '')}` : 'Turno Tarde'}
-                               </span>
-                             </div>
-                           )}
-                         </>
-                       ) : null}
+                       )}
                      </div>
                    )}
                  </div>
@@ -245,7 +195,7 @@
  };
  
  // 3. COMPONENTE: VISTA SEMANAL
- const VistaSemanal = ({ year, month, daysInMonth, firstDayOfMonth, assignments, isAdmin, setAssignmentModal, resolveAgent, currentWeekIndex, setCurrentWeekIndex, setCurrentDate, holidays }) => {
+ const VistaSemanal = ({ year, month, daysInMonth, firstDayOfMonth, assignments, isAdmin, setAssignmentModal, resolveAgent, currentWeekIndex, setCurrentWeekIndex, setCurrentDate }) => {
    const getMonthWeeks = () => {
      const weeks = []; let currentWeek = [];
      for (let i = 0; i < firstDayOfMonth; i++) currentWeek.push(null);
@@ -302,42 +252,27 @@
                
                const dow = new Date(year, month, day).getDay();
                const dateKey = `${year}-${month + 1}-${day}`;
-               const holidayName = holidays[dateKey];
-               const morningAgent = !holidayName ? resolveAgent(assignments[`${dateKey}-morning`]) : null;
-               const afternoonAgent = !holidayName ? resolveAgent(assignments[`${dateKey}-afternoon`]) : null;
+               const morningAgent = resolveAgent(assignments[`${dateKey}-morning`]);
+               const afternoonAgent = resolveAgent(assignments[`${dateKey}-afternoon`]);
                
                return (
-                 <div key={day} className={`min-h-[250px] border ${holidayName ? 'border-red-500 bg-red-50/40' : 'border-black'} p-3 md:p-4 transition-colors ${!holidayName && (dow === 0 ? 'bg-slate-200' : 'bg-slate-100 hover:bg-white')} flex flex-col`}>
+                 <div key={day} className={`min-h-[250px] border border-black p-3 md:p-4 transition-colors ${dow === 0 ? 'bg-slate-200' : 'bg-slate-100 hover:bg-white'} flex flex-col`}>
                    <div className="flex justify-between items-start mb-3">
-                     <span className={`text-xl md:text-2xl font-black ${holidayName ? 'text-red-600' : 'text-black'}`}>{day}</span>
-                     {holidayName ? (
-                         <span className="text-[8px] font-black uppercase text-red-600">Feriado</span>
-                     ) : dow === 0 ? (
-                         <span className="text-[8px] font-black uppercase text-black">Encerrado</span>
-                     ) : null}
+                     <span className="text-xl md:text-2xl font-black text-black">{day}</span>
+                     {dow === 0 && <span className="text-[8px] font-black uppercase text-black">Encerrado</span>}
                    </div>
-                   
-                   {(dow !== 0 || holidayName) && (
+                   {dow !== 0 && (
                      <div className="space-y-3 flex-1 flex flex-col">
-                       {holidayName ? (
-                          <div className="flex-1 p-2 rounded-xl border-2 border-red-500 bg-white text-center flex flex-col items-center justify-center transition-all shadow-sm">
-                             <span className="text-[10px] md:text-xs font-black uppercase text-red-600 opacity-90 mb-1">Feriado Nacional</span>
-                             <span className="text-sm md:text-base font-black uppercase leading-tight whitespace-normal break-words text-red-600">{holidayName}</span>
-                          </div>
-                       ) : dow !== 0 ? (
-                         <>
-                           <div onClick={() => isAdmin && setAssignmentModal({ isOpen: true, day, shift: 'morning' })} className={`flex-1 p-2 rounded-xl border-2 border-dashed text-center flex flex-col items-center justify-center transition-all ${morningAgent ? 'border-transparent text-white shadow-md' : 'border-slate-300 text-slate-500'} ${isAdmin ? 'cursor-pointer hover:border-red-400 bg-white/50' : 'cursor-default'}`} style={morningAgent ? { backgroundColor: morningAgent.color } : {}}>
-                             <span className="text-[9px] font-black uppercase opacity-70 mb-1">Manhã</span>
-                             <span className="text-xs md:text-sm font-black uppercase leading-tight whitespace-normal break-words">{morningAgent ? `${String(morningAgent.firstName || '')} ${String(morningAgent.lastName || '')}` : '+ Atribuir'}</span>
-                           </div>
-                           {dow !== 6 && (
-                             <div onClick={() => isAdmin && setAssignmentModal({ isOpen: true, day, shift: 'afternoon' })} className={`flex-1 p-2 rounded-xl border-2 border-dashed text-center flex flex-col items-center justify-center transition-all ${afternoonAgent ? 'border-transparent text-white shadow-md' : 'border-slate-300 text-slate-500'} ${isAdmin ? 'cursor-pointer hover:border-red-400 bg-white/50' : 'cursor-default'}`} style={afternoonAgent ? { backgroundColor: afternoonAgent.color } : {}}>
-                               <span className="text-[9px] font-black uppercase opacity-70 mb-1">Tarde</span>
-                               <span className="text-xs md:text-sm font-black uppercase leading-tight whitespace-normal break-words">{afternoonAgent ? `${String(afternoonAgent.firstName || '')} ${String(afternoonAgent.lastName || '')}` : '+ Atribuir'}</span>
-                             </div>
-                           )}
-                         </>
-                       ) : null}
+                       <div onClick={() => isAdmin && setAssignmentModal({ isOpen: true, day, shift: 'morning' })} className={`flex-1 p-2 rounded-xl border-2 border-dashed text-center flex flex-col items-center justify-center transition-all ${morningAgent ? 'border-transparent text-white shadow-md' : 'border-slate-300 text-slate-500'} ${isAdmin ? 'cursor-pointer hover:border-red-400 bg-white/50' : 'cursor-default'}`} style={morningAgent ? { backgroundColor: morningAgent.color } : {}}>
+                         <span className="text-[9px] font-black uppercase opacity-70 mb-1">Manhã</span>
+                         <span className="text-xs md:text-sm font-black uppercase leading-tight whitespace-normal break-words">{morningAgent ? `${String(morningAgent.firstName || '')} ${String(morningAgent.lastName || '')}` : '+ Atribuir'}</span>
+                       </div>
+                       {dow !== 6 && (
+                         <div onClick={() => isAdmin && setAssignmentModal({ isOpen: true, day, shift: 'afternoon' })} className={`flex-1 p-2 rounded-xl border-2 border-dashed text-center flex flex-col items-center justify-center transition-all ${afternoonAgent ? 'border-transparent text-white shadow-md' : 'border-slate-300 text-slate-500'} ${isAdmin ? 'cursor-pointer hover:border-red-400 bg-white/50' : 'cursor-default'}`} style={afternoonAgent ? { backgroundColor: afternoonAgent.color } : {}}>
+                           <span className="text-[9px] font-black uppercase opacity-70 mb-1">Tarde</span>
+                           <span className="text-xs md:text-sm font-black uppercase leading-tight whitespace-normal break-words">{afternoonAgent ? `${String(afternoonAgent.firstName || '')} ${String(afternoonAgent.lastName || '')}` : '+ Atribuir'}</span>
+                         </div>
+                       )}
                      </div>
                    )}
                  </div>
@@ -391,22 +326,19 @@
    // Data State
    const [assignments, setAssignments] = useState({});
    const [assignmentModal, setAssignmentModal] = useState({ isOpen: false, day: null, shift: null });
-   const [newAgent, setNewAgent] = useState({ firstName: '', lastName: '', email: '', phone: '', color: '#d50000', weeklyAbsences: [], absences: [] });
+   const [newAgent, setNewAgent] = useState({ firstName: '', lastName: '', email: '', phone: '', color: '#b40101', weeklyAbsences: [], absences: [] });
  
    const year = currentDate.getFullYear();
    const month = currentDate.getMonth();
    const daysInMonth = new Date(year, month + 1, 0).getDate();
    const firstDayOfMonth = new Date(year, month, 1).getDay();
  
-   // Memória Feriados: Atualiza-se instantaneamente consoante o ano escolhido no calendário
-   const holidays = useMemo(() => getPTnationalHolidays(year), [year]);
- 
    // --- V2.6 CORE: DATA NORMALIZATION (resolveAgent) ---
    const resolveAgent = useCallback((val) => {
      if (!val) return null;
      const id = typeof val === 'object' ? val.id : val;
      const found = agents.find(a => a.id === id);
-     return found || (typeof val === 'object' ? val : null);
+     return found || (typeof val === 'object' ? val : null); // Fallback para manter histórico se o agente foi apagado
    }, [agents]);
  
    useEffect(() => {
@@ -490,13 +422,6 @@
      let prevDayLastShiftAgentId = null; 
  
      for (let day = 1; day <= daysInMonth; day++) {
-       const dateKey = `${year}-${month + 1}-${day}`;
-       // V2.7 - Bloqueia Feriados de forma inteligente
-       if (holidays[dateKey]) {
-         prevDayLastShiftAgentId = null; 
-         continue;
-       }
- 
        const dow = new Date(year, month, day).getDay();
        if (dow === 0) { prevDayLastShiftAgentId = null; continue; }
        
@@ -513,7 +438,7 @@
  
          if (available.length > 0) {
            const chosen = available[0];
-           newAssignments[`${year}-${month + 1}-${day}-${shift}`] = chosen.id;
+           newAssignments[`${year}-${month + 1}-${day}-${shift}`] = chosen.id; // V2.6: Normalization (Save ID only)
            shiftCounts[chosen.id]++;
            currentDayAgents.push(chosen.id);
            if (shift === shifts[shifts.length - 1]) prevDayLastShiftAgentId = chosen.id;
@@ -530,6 +455,7 @@
      const newList = agents.map(a => a.id === updated.id ? updated : a);
      setAgents(newList);
      await saveAgentsToCloud(newList);
+     // V2.6: O LOOP DE ATUALIZAÇÃO DE ASSIGNMENTS FOI REMOVIDO! A normalização resolve isto automaticamente.
      setIsEditingProfile(false);
    };
  
@@ -617,7 +543,7 @@
            if (calendar) {
              calendar.style.width = '1440px'; calendar.style.overflow = 'visible'; calendar.style.height = 'auto';
              calendar.querySelectorAll('.day-cell .font-black.uppercase.block').forEach(l => { l.style.fontSize = '12px'; l.style.whiteSpace = 'normal'; l.style.lineHeight = '1.1'; l.style.display = 'block'; });
-             calendar.querySelectorAll('.day-cell div[style*="background-color"], .day-cell div.border-red-500').forEach(b => { b.style.padding = '4px'; b.style.height = 'auto'; b.style.minHeight = '48px'; });
+             calendar.querySelectorAll('.day-cell div[style*="background-color"]').forEach(b => { b.style.padding = '4px'; b.style.height = 'auto'; b.style.minHeight = '48px'; });
              const nav = calendar.querySelector('.no-print-pdf'); if (nav) nav.style.display = 'none';
            }
          }
@@ -724,7 +650,7 @@
               </div>
             )}
             <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-red-500 transition-all"><LogOut size={16} /> <span className="font-bold text-xs uppercase">Sair</span></button>
-            <div className="flex items-center justify-between px-2 pt-2 border-t border-slate-800"><span className="text-[10px] uppercase font-black tracking-widest text-slate-700">Versão</span><span className="text-[10px] font-black text-red-600 bg-red-600/10 px-2 py-0.5 rounded">V2.7</span></div>
+            <div className="flex items-center justify-between px-2 pt-2 border-t border-slate-800"><span className="text-[10px] uppercase font-black tracking-widest text-slate-700">Versão</span><span className="text-[10px] font-black text-red-600 bg-red-600/10 px-2 py-0.5 rounded">V2.6.1</span></div>
          </div>
        </nav>
  
@@ -794,16 +720,16 @@
            {/* RENDERING CONDICIONAL DAS VIEWS MODULARIZADAS */}
            {activeView === 'accounting' && <Contabilidade agents={agents} assignments={assignments} month={month} year={year} setCurrentDate={setCurrentDate} resolveAgent={resolveAgent} />}
            
-           {activeView === 'calendar' && <Calendario year={year} month={month} daysInMonth={daysInMonth} firstDayOfMonth={firstDayOfMonth} assignments={assignments} isAdmin={isAdmin} setAssignmentModal={setAssignmentModal} resolveAgent={resolveAgent} setCurrentDate={setCurrentDate} holidays={holidays} />}
+           {activeView === 'calendar' && <Calendario year={year} month={month} daysInMonth={daysInMonth} firstDayOfMonth={firstDayOfMonth} assignments={assignments} isAdmin={isAdmin} setAssignmentModal={setAssignmentModal} resolveAgent={resolveAgent} setCurrentDate={setCurrentDate} />}
            
-           {activeView === 'weekly' && <VistaSemanal year={year} month={month} daysInMonth={daysInMonth} firstDayOfMonth={firstDayOfMonth} assignments={assignments} isAdmin={isAdmin} setAssignmentModal={setAssignmentModal} resolveAgent={resolveAgent} currentWeekIndex={currentWeekIndex} setCurrentWeekIndex={setCurrentWeekIndex} setCurrentDate={setCurrentDate} holidays={holidays} />}
+           {activeView === 'weekly' && <VistaSemanal year={year} month={month} daysInMonth={daysInMonth} firstDayOfMonth={firstDayOfMonth} assignments={assignments} isAdmin={isAdmin} setAssignmentModal={setAssignmentModal} resolveAgent={resolveAgent} currentWeekIndex={currentWeekIndex} setCurrentWeekIndex={setCurrentWeekIndex} setCurrentDate={setCurrentDate} />}
            
            {activeView === 'database' && (
              <div className="space-y-8 animate-in slide-in-from-bottom-8 duration-500">
                {isAdmin && (
                  <div className="bg-white p-6 md:p-8 rounded-2xl md:rounded-[32px] shadow-xl border border-slate-200">
                    <h3 className="text-xs font-black uppercase tracking-[0.4em] mb-6 text-red-600 flex items-center gap-3"><UserPlus size={20} /> Novo Registo na Cloud</h3>
-                   <form onSubmit={async (e) => { e.preventDefault(); if (newAgent.firstName && newAgent.lastName) { const agentToSave = { ...newAgent, id: Date.now().toString() }; const newList = [...agents, agentToSave]; setAgents(newList); await saveAgentsToCloud(newList); setNewAgent({ firstName: '', lastName: '', email: '', phone: '', color: '#d50000', weeklyAbsences: [], absences: [] }); setIsNewColorDropdownOpen(false); } }} className="space-y-6">
+                   <form onSubmit={async (e) => { e.preventDefault(); if (newAgent.firstName && newAgent.lastName) { const agentToSave = { ...newAgent, id: Date.now().toString() }; const newList = [...agents, agentToSave]; setAgents(newList); await saveAgentsToCloud(newList); setNewAgent({ firstName: '', lastName: '', email: '', phone: '', color: '#b40101', weeklyAbsences: [], absences: [] }); setIsNewColorDropdownOpen(false); } }} className="space-y-6">
                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                        <input required className="bg-slate-50 rounded-xl p-4 text-sm font-bold border-2 border-transparent focus:border-red-600 outline-none" placeholder="Nome" value={newAgent.firstName} onChange={e => setNewAgent({...newAgent, firstName: e.target.value})}/>
                        <input required className="bg-slate-50 rounded-xl p-4 text-sm font-bold border-2 border-transparent focus:border-red-600 outline-none" placeholder="Apelido" value={newAgent.lastName} onChange={e => setNewAgent({...newAgent, lastName: e.target.value})}/>
@@ -943,3 +869,4 @@
  };
  
  export default App;
+ 
