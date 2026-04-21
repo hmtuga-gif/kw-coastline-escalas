@@ -16,7 +16,11 @@
  } from 'lucide-react';
  
  // --- CONFIGURAÇÕES E CONSTANTES ---
- const ADMIN_EMAILS = ['hugocunha@kwportugal.pt']; ['sofiaribeiro@kwportugal.pt']
+ const ADMIN_EMAILS = [
+  'hugocunha@kwportugal.pt', 
+  'sofiaribeiro@kwportugal.pt', 
+  'kwcoastline@kwportugal.pt'
+];
  
  const defaultFirebaseConfig = {
    
