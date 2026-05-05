@@ -19,8 +19,12 @@ import {
 const ADMIN_EMAILS = ['hugocunha@kwportugal.pt'];
 
 const defaultFirebaseConfig = {
-  apiKey: "PREENCHER_AQUI", authDomain: "PREENCHER_AQUI", projectId: "PREENCHER_AQUI",
-  storageBucket: "PREENCHER_AQUI", messagingSenderId: "PREENCHER_AQUI", appId: "PREENCHER_AQUI"
+  apiKey: "AIzaSyBQN51i9RgnoygcchPVmYt-nON1aY4_eUc",
+  authDomain: "our-tract-466815-j4.firebaseapp.com",
+  projectId: "our-tract-466815-j4",
+  storageBucket: "our-tract-466815-j4.firebasestorage.app",
+  messagingSenderId: "568088933808",
+  appId: "1:568088933808:web:0ac71bb1a239b70d5dd275"
 };
 
 const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : defaultFirebaseConfig;
