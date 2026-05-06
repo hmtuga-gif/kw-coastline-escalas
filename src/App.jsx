@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 
 // --- CONFIGURAÇÕES E CONSTANTES ---
-const ADMIN_EMAILS = ['hugocunha@kwportugal.pt'];
+const ADMIN_EMAILS = ['hugocunha@kwportugal.pt', 'kwcoastline@kwportugal.pt', 'sofiaribeiro@kwportugal.pt'];
 
 const defaultFirebaseConfig = {
   apiKey: "AIzaSyBQN51i9RgnoygcchPVmYt-nON1aY4_eUc",
