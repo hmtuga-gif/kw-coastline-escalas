@@ -162,7 +162,7 @@ const Calendario = ({ year, month, daysInMonth, firstDayOfMonth, assignments, is
           
           <div className="grid grid-cols-7 text-center bg-slate-200/80 border-b border-black">
             {daysOfWeek.map(day => (
-              <div key={day} className="py-2 md:py-4 text-[6px] sm:text-[7px] md:text-[8px] lg:text-[10px] font-black uppercase tracking-tighter md:tracking-normal text-black shrink-0 leading-tight px-0.5">{day}</div>
+              <div key={day} className="pdf-header-day py-2 md:py-4 text-[6px] sm:text-[7px] md:text-[8px] lg:text-[10px] font-black uppercase tracking-tighter md:tracking-normal text-black shrink-0 leading-tight px-0.5">{day}</div>
             ))}
           </div>
 
@@ -188,11 +188,11 @@ const Calendario = ({ year, month, daysInMonth, firstDayOfMonth, assignments, is
                   )}
 
                   <div className="flex justify-between items-start mb-1.5 md:mb-2 relative z-10">
-                    <span className={`text-xs font-black ${holidayName ? 'text-red-600' : 'text-black'}`}>{day}</span>
+                    <span className={`pdf-day-number text-xs font-black ${holidayName ? 'text-red-600' : 'text-black'}`}>{day}</span>
                     {holidayName ? (
-                        <span className="text-[8px] font-black uppercase text-red-600">Feriado</span>
+                        <span className="pdf-holiday-badge text-[8px] font-black uppercase text-red-600">Feriado</span>
                     ) : dow === 0 ? (
-                        <span className="text-[8px] font-black uppercase text-black">Encerrado</span>
+                        <span className="pdf-closed-badge text-[8px] font-black uppercase text-black">Encerrado</span>
                     ) : null}
                   </div>
                   
@@ -200,7 +200,7 @@ const Calendario = ({ year, month, daysInMonth, firstDayOfMonth, assignments, is
                     <div className="space-y-1.5 flex-1 flex flex-col justify-center relative z-10">
                       {holidayName ? (
                         <div className="flex-1 p-1 lg:p-1.5 rounded-lg border-2 border-red-500 bg-white/80 backdrop-blur-sm text-center flex flex-col items-center justify-center min-h-[2.5rem] shadow-sm">
-                           <span className="text-[8px] md:text-[9px] font-black text-red-600 uppercase leading-[1.1] tracking-tighter whitespace-normal break-words block px-0.5">{holidayName}</span>
+                           <span className="pdf-holiday-name text-[8px] md:text-[9px] font-black text-red-600 uppercase leading-[1.1] tracking-tighter whitespace-normal break-words block px-0.5">{holidayName}</span>
                         </div>
                       ) : dow !== 0 ? (
                         <>
@@ -475,7 +475,7 @@ const App = () => {
     if (!user || user.isAnonymous) return;
     const unsub = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'agents', 'list'), (snapshot) => {
       if (snapshot.exists()) setAgents(snapshot.data().list || []);
-    }, () => setErrorMessage("Erro ao ler base de dados (Consultores)."));
+    }, (err) => setErrorMessage(`Erro ao ler base de dados (Consultores): ${err.message}`));
     return () => unsub();
   }, [user]);
 
@@ -483,7 +483,7 @@ const App = () => {
     if (!user || user.isAnonymous) return;
     const unsub = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'scales', `${year}-${month + 1}`), (snapshot) => {
       setAssignments(snapshot.exists() ? snapshot.data().assignments || {} : {});
-    }, () => console.error("Erro ao carregar escalas"));
+    }, (err) => console.error(`Erro ao carregar escalas: ${err.message}`));
     return () => unsub();
   }, [user, year, month]);
 
@@ -491,14 +491,14 @@ const App = () => {
     if (!isAdmin) return;
     setIsSaving(true);
     try { await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'scales', `${year}-${month + 1}`), { assignments: data, lastUpdated: new Date().toISOString() }); } 
-    catch (err) { setErrorMessage("Falha ao guardar escala."); } finally { setIsSaving(false); }
+    catch (err) { console.error(err); setErrorMessage(`Falha ao guardar escala: ${err.message}`); } finally { setIsSaving(false); }
   };
 
   const saveAgentsToCloud = async (list) => {
     if (!isAdmin) return;
     setIsSaving(true);
     try { await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'agents', 'list'), { list }); } 
-    catch (err) { setErrorMessage("Falha ao atualizar consultores."); } finally { setIsSaving(false); }
+    catch (err) { console.error(err); setErrorMessage(`Falha ao atualizar consultores: ${err.message}`); } finally { setIsSaving(false); }
   };
 
   // V2.8: Lógica de Check Availability com Turnos
@@ -705,6 +705,44 @@ const App = () => {
                 b.style.marginRight = 'auto';
             });
             
+            // --- NOVOS AJUSTES DE TAMANHO DE FONTE NA EXPORTAÇÃO ---
+            
+            // Dias da Semana (Segunda, Terça, etc.)
+            calendar.querySelectorAll('.pdf-header-day').forEach(label => {
+                label.style.fontSize = '16px';
+                label.style.paddingTop = '12px';
+                label.style.paddingBottom = '12px';
+            });
+            
+            // Número dos Dias (1, 2, 3...)
+            calendar.querySelectorAll('.pdf-day-number').forEach(label => {
+                label.style.fontSize = '18px';
+            });
+            
+            // Etiquetas Superiores ("Feriado" ou "Encerrado")
+            calendar.querySelectorAll('.pdf-holiday-badge, .pdf-closed-badge').forEach(label => {
+                label.style.fontSize = '12px';
+            });
+
+            // Nome do Feriado a meio da célula
+            calendar.querySelectorAll('.pdf-holiday-name').forEach(label => {
+                label.style.display = 'block';
+                label.style.width = '100%';
+                label.style.maxWidth = '100%';
+                label.style.minWidth = '0';
+                label.style.whiteSpace = 'normal';
+                label.style.overflow = 'visible';
+                label.style.textOverflow = 'clip';
+                label.style.wordBreak = 'break-word';
+                label.style.overflowWrap = 'anywhere';
+                label.style.lineHeight = '1.2';
+                label.style.fontSize = '20px'; // Aumentado para coincidir com os nomes
+                label.style.fontWeight = 'bold';
+                label.style.letterSpacing = '0';
+                label.style.textAlign = 'center';
+            });
+
+            // Nomes dos Consultores
             calendar.querySelectorAll('.pdf-agent-name').forEach(label => {
                 label.style.display = 'block';
                 label.style.width = '100%';
